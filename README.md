@@ -1,6 +1,6 @@
-# ESPHome Davis Vantage Pro2 / Vue Receiver using ESP32S3-ZER0 + E07-900M10S (CC1101)
+# ESPHome Davis Vantage Pro2 / Vue Receiver using ESP32-S3-Zero + CC1101
 
-Receive a **Davis Vantage Pro2 / Vantage Vue EU 868 MHz** outdoor transmitter directly with an **ESP32 + CC1101**, decode the weather packets in ESPHome, and publish the measurements to Home Assistant.
+Receive a **Davis Vantage Pro2 / Vantage Vue EU 868 MHz** outdoor transmitter directly with an **ESP32-S3-Zero + CC1101**, decode the weather packets in ESPHome, and publish the measurements to Home Assistant.
 
 No Davis console is required.
 
@@ -20,6 +20,7 @@ The current YAML provides:
 - Davis CRC-16 validation
 - Bit-alignment recovery
 - Per-hop reception statistics
+- Onboard WS2812 RGB LED indication on each valid Davis packet
 - Home Assistant entities for:
   - Outdoor temperature
   - Outdoor humidity
@@ -37,16 +38,15 @@ The current YAML provides:
 - Optional ESPHome web server
 - Optional Bluetooth proxy
 
-
-
 ---
 
 ## Tested configuration
 
 Development testing was performed with:
 
-- ESP32
-- CC1101 868 MHz module
+- **Waveshare ESP32-S3-Zero**
+- **CC1101 868 MHz module**
+- **Onboard WS2812 RGB LED on GPIO21** for packet indication
 - Davis outdoor transmitter using Station ID `0`
 - ESPHome 2026.8.2
 - ESP-IDF framework
@@ -61,7 +61,7 @@ Actual performance will depend on antenna, CC1101 module quality, wiring, interf
 
 ## Required
 
-- ESP32 development board
+- ESP32-S3-Zero development board (Waveshare)
 - CC1101 RF module suitable for the 868 MHz band
 - 868 MHz antenna
 - 3.3 V power for the CC1101
@@ -72,23 +72,57 @@ A CC1101 module designed for 868/915 MHz operation is recommended.
 > **Do not power the CC1101 from 5 V.**  
 > Use **3.3 V** power and 3.3 V logic.
 
+### Onboard RGB LED
+
+The Waveshare ESP32-S3-Zero includes a **WS2812 RGB LED on GPIO21**.
+
+In this configuration the LED is used as a **status indicator**:
+
+- **Green** — temperature packet (Type 8)
+- **Cyan** — humidity packet (Type 10)
+- **Blue** — rain packet (Type 5 or Type 14)
+- **Yellow** — solar radiation packet (Type 6)
+- **Purple** — UV index packet (Type 4)
+- **White** — other valid packets
+- **Red** — strong CRC-bad packet inside the expected time window
+
+The LED is declared as an `internal: true` light so it does not appear as a controllable entity in Home Assistant.
+
 ---
 
 # Wiring
 
-The included YAML uses the following ESP32 pins:
+The included YAML uses the following ESP32-S3-Zero pins:
 
-| CC1101 pin | ESP32 pin | Function |
+| CC1101 pin | ESP32-S3-Zero pin | Function |
 |---|---:|---|
 | VCC | 3.3 V | Power |
 | GND | GND | Ground |
-| SCK / CLK | GPIO18 | SPI clock |
-| MISO / SO | GPIO19 | SPI MISO |
-| MOSI / SI | GPIO23 | SPI MOSI |
-| CSN / SS | GPIO5 | Chip select |
-| GDO0 | GPIO4 | Packet interrupt / packet-ready signal |
-| GDO2 | Not connected | Not used |
+| SCK / CLK | GPIO2 | SPI clock |
+| MISO / SO | GPIO3 | SPI MISO |
+| MOSI / SI | GPIO1 | SPI MOSI |
+| CSN / SS | GPIO4 | Chip select |
+| GDO0 | GPIO5 | Packet interrupt / packet-ready signal |
+| GDO2 | GPIO6 | Not used by this configuration |
 
+> **Note:** GPIO3 is a strapping pin on the ESP32-S3. It is used here for MISO. This works in practice, but avoid adding external pull-up/pull-down resistors on this pin.
+
+### Wiring diagram
+
+```text
+ESP32-S3-Zero                 CC1101
+--------------                ------
+
+3.3V  ----------------------> VCC
+GND   ----------------------> GND
+
+GPIO2 ----------------------> SCK
+GPIO3 <---------------------- MISO / SO
+GPIO1 ----------------------> MOSI / SI
+GPIO4 ----------------------> CSN / SS
+GPIO5 <---------------------- GDO0
+
+                               ANT ---- 868 MHz antenna
 ### Wiring diagram
 
 ```text
