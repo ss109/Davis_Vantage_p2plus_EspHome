@@ -1,4 +1,4 @@
-# ESPHome Davis Vantage Pro2 / Vue Receiver using ESP32 + CC1101
+# ESPHome Davis Vantage Pro2 / Vue Receiver using ESP32S3-ZER0 + E07-900M10S (CC1101)
 
 Receive a **Davis Vantage Pro2 / Vantage Vue EU 868 MHz** outdoor transmitter directly with an **ESP32 + CC1101**, decode the weather packets in ESPHome, and publish the measurements to Home Assistant.
 
